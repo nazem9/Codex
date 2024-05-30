@@ -8,6 +8,7 @@ import Toolbar from "./Toolbar/Toolbar";
 import { extensions } from "./EditorExtensions";
 import { TableOfContents } from "./TableOfContents";
 import { EditorStyles } from "./EditorStyles";
+import * as math from 'mathjs';
 
 type Props = {
     page: Page;
@@ -37,6 +38,39 @@ export function EditorView({ page, setEditorRef }: Props) {
         },
         [page.id]
     );
+
+    // Function to parse and evaluate expressions
+    const parseAndEvaluate = (content: string) => {
+        return content.replace(/\{([^}]+)\}/g, (match: any, expression: math.MathExpression) => {
+            try {
+                const result = math.evaluate(expression);
+                return result;
+            } catch (error) {
+                console.error(`Error evaluating expression: ${expression}`, error);
+                return match;
+            }
+        });
+    };
+
+    useEffect(() => {
+        if (editor) {
+            const updateContent = () => {
+                const selection = editor.state.selection;
+                const start = selection.from;
+                const end = selection.to;
+                
+                const str = editor.getHTML();
+                const newContent = parseAndEvaluate(str);
+
+                editor.commands.setContent(newContent, false, { preserveWhitespace: true });
+
+                // Restore cursor position
+                editor.commands.setTextSelection({ from: start, to: end });
+            };
+
+            editor.on('update', updateContent);
+        }
+    }, [editor]);
 
     setEditorRef(editor);
 
