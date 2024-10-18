@@ -244,7 +244,7 @@ export function App() {
         }
 
         fakeEditor.current.commands.setContent("");
-
+        
         notifications.show({
             message: (
                 <Text truncate>
